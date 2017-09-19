@@ -132,6 +132,28 @@ Install the project if wanted:
 
     $ sudo make install
 
+### Compiling on OSX/MacOS
+
+The following instructions are for macOS and require Homebrew (https://brew.sh).
+
+Install swig:
+
+    $ brew install swig
+
+To build IfcOpenShell, please take the following steps:
+
+    $ cd /path/to/IfcOpenShell
+    $ mkdir build && cd build
+    $ cmake ../cmake -DOCC_INCLUDE_DIR="/usr/local/opencascade/" \
+          -DOCC_LIBRARY_DIR="/usr/local/lib/" \
+          -DUNICODE_SUPPORT=0 \
+          -DCOLLADA_SUPPORT=0
+    $ make -j
+
+Install the project:
+
+    $ sudo make install
+
 Usage examples
 --------------
 
