@@ -399,6 +399,8 @@ namespace IfcGeom {
 		std::set<IfcSchema::IfcRepresentation*> mapped_representations_processed;
 
 		BRepElement<P>* create_shape_model_for_next_entity() {
+			static int count = 0;
+			bool debug = count++ >= 20100;
 			for (;;) {
 				IfcSchema::IfcRepresentation* representation;
 
@@ -579,6 +581,7 @@ namespace IfcGeom {
 				}
 
 				IfcSchema::IfcProduct* product = *ifcproduct_iterator;
+				if (debug)	std::cout << "product is : " << product->Name() << ", " << product->GlobalId() << std::endl;
 
 				Logger::SetProduct(product);
 
@@ -620,6 +623,10 @@ namespace IfcGeom {
 				++ifcproduct_iterator;
 			}
 
+			static int nCount = 0;
+			if (nCount++ >= 20100) {
+				std::cout << "@ next() " << nCount << std::endl;
+			}
 			return create();
 		}
 
@@ -674,14 +681,22 @@ namespace IfcGeom {
 		bool create() {
 			bool success = true;
 
+			static int count = 0;
+			bool debug = count++ >= 20100;		
+
 			IfcGeom::BRepElement<P>* next_shape_model = 0;
 			IfcGeom::SerializedElement<P>* next_serialization = 0;
 			IfcGeom::TriangulationElement<P>* next_triangulation = 0;
+
+			if (debug) std::cout << "@create() " << count << std::endl;
 
 			try {
 				next_shape_model = create_shape_model_for_next_entity();
 			}
 			catch (...) {}
+
+			if (debug) std::cout << "@create() " << count << " after create shape" << std::endl;
+
 
 			if (next_shape_model) {
 				if (settings.get(IteratorSettings::USE_BREP_DATA)) {
@@ -711,7 +726,7 @@ namespace IfcGeom {
 			else {
 				success = false;
 			}
-
+			if (debug) std::cout << "@create() " << count << " before free shape" << std::endl;
 			free_shapes();
 
 			current_shape_model = next_shape_model;
