@@ -400,7 +400,8 @@ namespace IfcGeom {
 
 		BRepElement<P>* create_shape_model_for_next_entity() {
 			static int count = 0;
-			bool debug = count++ >= 20100;
+			bool debug = count % 1000 == 0 || count >= 20100;
+			count++;
 			for (;;) {
 				IfcSchema::IfcRepresentation* representation;
 
@@ -624,9 +625,10 @@ namespace IfcGeom {
 			}
 
 			static int nCount = 0;
-			if (nCount++ >= 20100) {
+			if (nCount % 1000 == 0 || nCount >= 20100) {
 				std::cout << "@ next() " << nCount << std::endl;
 			}
+			nCount++;
 			return create();
 		}
 
@@ -682,7 +684,8 @@ namespace IfcGeom {
 			bool success = true;
 
 			static int count = 0;
-			bool debug = count++ >= 20100;		
+			bool debug = count % 1000 == 0 || count >= 20100 ;
+			count++;
 
 			IfcGeom::BRepElement<P>* next_shape_model = 0;
 			IfcGeom::SerializedElement<P>* next_serialization = 0;
