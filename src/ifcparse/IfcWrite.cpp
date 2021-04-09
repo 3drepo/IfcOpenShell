@@ -83,7 +83,7 @@ IfcEntityList::ptr IfcWritableEntity::getInverse(IfcSchema::Type::Enum type, int
 std::string IfcWritableEntity::datatype() const { return IfcSchema::Type::ToString(_type); }
 Argument* IfcWritableEntity::getArgument (unsigned int i) {
 	if (args[i] == 0) {
-		_setArgument(i, boost::none);
+		_setArgument(i, boost::blank());
 	}
 	return args[i];
 }
@@ -141,7 +141,7 @@ template <typename T> void IfcWritableEntity::_setArgument(int i, const T& t) {
 }
 
 void IfcWritableEntity::setArgument(int i) {
-	_setArgument(i, boost::none);
+	_setArgument(i, boost::blank());
 }
 
 void IfcWritableEntity::setArgument(int i, Argument* a) {
@@ -257,21 +257,21 @@ void IfcWritableEntity::setArgument(int i,IfcUtil::IfcBaseClass* v){
 	if ( v ) {
 		_setArgument(i, v);
 	} else {
-		_setArgument(i, boost::none);
+		_setArgument(i, boost::blank());
 	}
 }
 void IfcWritableEntity::setArgument(int i,IfcEntityList::ptr v){
 	if ( v.get() ) {
 		_setArgument(i, v);
 	} else {
-		_setArgument(i, boost::none);
+		_setArgument(i, boost::blank());
 	}
 }
 void IfcWritableEntity::setArgument(int i,IfcEntityListList::ptr v){
 	if ( v.get() ) {
 		_setArgument(i, v);
 	} else {
-		_setArgument(i, boost::none);
+		_setArgument(i, boost::blank());
 	}
 }
 void IfcWritableEntity::setArgument(int i,const std::vector<double>& v){
@@ -295,7 +295,7 @@ void IfcWritableEntity::setArgument(int i,const std::vector< boost::dynamic_bits
 
 class SizeVisitor : public boost::static_visitor<int> {
 public:
-	int operator()(const boost::none_t& /*i*/) const { return -1; }
+	int operator()(const boost::blank& /*i*/) const { return -1; }
 	int operator()(const IfcWriteArgument::Derived& /*i*/) const { return -1; }
 	int operator()(const int& /*i*/) const { return -1; }
 	int operator()(const bool& /*i*/) const { return -1; }
@@ -377,7 +377,7 @@ private:
 public:
 	StringBuilderVisitor(std::ostringstream& stream, bool upper = false) 
 		: data(stream), upper(upper) {}
-	void operator()(const boost::none_t& /*i*/) { data << "$"; }
+	void operator()(const boost::blank& /*i*/) { data << "$"; }
 	void operator()(const IfcWriteArgument::Derived& /*i*/) { data << "*"; }
 	void operator()(const int& i) { data << i; }
 	void operator()(const bool& i) { data << (i ? ".T." : ".F."); }
