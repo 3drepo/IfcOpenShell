@@ -323,7 +323,7 @@ namespace IfcGeom {
 										d2 = d1.Crossed(gp::DY());
 									}
 									d3 = d1.XYZ() + d2.XYZ();
-									d4 = d1.XYZ() - d2.XYZ();									
+									d4 = d1.XYZ() - d2.XYZ();
 									p2 = p_local - d3.XYZ() / 10.;
 									p3 = p_local - d4.XYZ() / 10.;
 									trsf.Transforms(p2);
