@@ -1,26 +1,28 @@
-###############################################################################
-#                                                                             #
-# This file is part of IfcOpenShell.                                          #
-#                                                                             #
-# IfcOpenShell is free software: you can redistribute it and/or modify        #
-# it under the terms of the Lesser GNU General Public License as published by #
-# the Free Software Foundation, either version 3.0 of the License, or         #
-# (at your option) any later version.                                         #
-#                                                                             #
-# IfcOpenShell is distributed in the hope that it will be useful,             #
-# but WITHOUT ANY WARRANTY; without even the implied warranty of              #
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                #
-# Lesser GNU General Public License for more details.                         #
-#                                                                             #
-# You should have received a copy of the Lesser GNU General Public License    #
-# along with this program. If not, see <http://www.gnu.org/licenses/>.        #
-#                                                                             #
-###############################################################################
+# IfcOpenShell - IFC toolkit and geometry engine
+# Copyright (C) 2021 Thomas Krijnen <thomas@aecgeeks.com>
+#
+# This file is part of IfcOpenShell.
+#
+# IfcOpenShell is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Lesser General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# IfcOpenShell is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public License
+# along with IfcOpenShell.  If not, see <http://www.gnu.org/licenses/>.
+
 
 import codegen
 import templates
 
 from schema import OrderedCaseInsensitiveDict
+
+from header import USE_VIRTUAL_INHERITANCE
 
 
 class Implementation(codegen.Base):
@@ -41,6 +43,17 @@ class Implementation(codegen.Base):
 
         write = lambda str, **kwargs: enumeration_functions.append(str % kwargs)
 
+        collections_by_type = (
+            ("entity", mapping.schema.entities),
+            ("type_declaration", mapping.schema.simpletypes),
+            ("select_type", mapping.schema.selects),
+            ("enumeration_type", mapping.schema.enumerations),
+        )
+        self.names = []
+        for _, collection in collections_by_type:
+            self.names.extend(collection.keys())
+        self.names.sort(key=str.lower)
+
         for name, enum in mapping.schema.enumerations.items():
             short_name = name[:-4] if name.endswith("Enum") else name
             context = locals()
@@ -50,11 +63,22 @@ class Implementation(codegen.Base):
                 name=name,
                 schema_name=schema_name,
                 schema_name_upper=schema_name_upper,
+                index_in_schema=self.names.index(str(name)),
                 values=catc(map(stringify, enum.values)),
                 from_string_statements=catnl(
                     templates.enum_from_string_stmt % dict(context, **locals()) for value in enum.values
                 ),
             )
+            
+        if USE_VIRTUAL_INHERITANCE:
+            for name, enum in mapping.schema.selects.items():
+                write(
+                    templates.select_function,
+                    name=name,
+                    schema_name=schema_name,
+                    schema_name_upper=schema_name_upper,
+                    index_in_schema=self.names.index(str(name)),
+                )
 
         write = lambda str, **kwargs: entity_implementations.append(str % kwargs)
 
@@ -74,17 +98,6 @@ class Implementation(codegen.Base):
             write_attr = lambda str, **kwargs: attributes.append(str % kwargs)
             for arg in constructor_arguments:
                 if not arg["is_inherited"] and not arg["is_derived"]:
-                    if arg["is_optional"]:
-                        write_attr(
-                            templates.const_function,
-                            class_name=name,
-                            schema_name=schema_name,
-                            schema_name_upper=schema_name_upper,
-                            name="has%s" % arg["name"],
-                            arguments="",
-                            return_type="bool",
-                            body=templates.optional_attr_stmt % {"index": arg["index"] - 1},
-                        )
 
                     def find_template(arg):
                         simple = mapping.schema.is_simpletype(arg["list_instance_type"])
@@ -103,6 +116,17 @@ class Implementation(codegen.Base):
                         else:
                             return templates.get_attr_stmt
 
+                    null_check = ""
+                    if arg["is_optional"]:
+                        attr_check = (
+                            "if(data_.get_attribute_value(%d).isNull()) { return %%s; }"
+                            % (arg["index"] - 1,)
+                        )
+                        if "boost::optional" in arg["full_type"]:
+                            null_check = attr_check % "boost::none"
+                        else:
+                            null_check = attr_check % "nullptr"
+
                     tmpl = find_template(arg)
                     write_attr(
                         templates.const_function,
@@ -111,12 +135,17 @@ class Implementation(codegen.Base):
                         arguments="",
                         schema_name=schema_name,
                         schema_name_upper=schema_name_upper,
-                        return_type=arg["non_optional_type"],
+                        return_type=arg["full_type"],
                         body=tmpl
                         % {
                             "index": arg["index"] - 1,
-                            "type": arg["non_optional_type"].replace("::Value", ""),
+                            "type": arg["full_type"].replace("::Value", ""),
+                            "non_optional_type": arg["non_optional_type"].replace("::Value", ""),
+                            "non_optional_type_no_pointer": arg["non_optional_type"]
+                            .replace("::Value", "")
+                            .replace("*", ""),
                             "list_instance_type": arg["list_instance_type"],
+                            "null_check": null_check,
                         },
                     )
 
@@ -128,6 +157,8 @@ class Implementation(codegen.Base):
                             return templates.set_attr_stmt_enum
                         elif arg["is_templated_list"] and not (select or simple or express):
                             return templates.set_attr_stmt_array
+                        elif arg["full_type"].endswith('*'):
+                            return templates.set_attr_instance
                         else:
                             return templates.set_attr_stmt
 
@@ -136,12 +167,20 @@ class Implementation(codegen.Base):
                         templates.function,
                         class_name=name,
                         name="set%s" % arg["name"],
-                        arguments="%s v" % arg["non_optional_type"],
+                        arguments="%s v" % arg["full_type"],
                         return_type="void",
                         schema_name=schema_name,
                         schema_name_upper=schema_name_upper,
                         body=tmpl
-                        % {"index": arg["index"] - 1, "type": arg["non_optional_type"].replace("::Value", "")},
+                        % {
+                            "index": arg["index"] - 1,
+                            "type": arg["full_type"].replace("::Value", ""),
+                            "non_optional_type": arg["non_optional_type"].replace("::Value", ""),
+                            "star_if_optional": "*" if "boost::optional" in arg["full_type"] else "",
+                            "check_optional_set_begin": "if (v) {" if "boost::optional" in arg["full_type"] else "",
+                            "check_optional_set_else": "} else {" if "boost::optional" in arg["full_type"] else "if constexpr (false)",
+                            "check_optional_set_end": "}" if "boost::optional" in arg["full_type"] else "",
+                        },
                     )
 
                 if arg["is_derived"]:
@@ -156,6 +195,8 @@ class Implementation(codegen.Base):
                         if arg["is_templated_list"]
                         else templates.constructor_stmt_enum
                         if arg["is_enum"]
+                        else templates.constructor_stmt_instance
+                        if arg["full_type"].endswith('*')
                         else templates.constructor_stmt
                     )
                     impl = tmpl % {
@@ -189,6 +230,7 @@ class Implementation(codegen.Base):
                     "body": templates.get_inverse
                     % {
                         "type": i.entity,
+                        "type_index": self.names.index(i.entity),
                         "index": get_attribute_index(i.entity, i.attribute),
                         "schema_name": schema_name,
                         "schema_name_upper": schema_name_upper,
@@ -198,10 +240,16 @@ class Implementation(codegen.Base):
             ]
 
             superclass = (
-                "%s((IfcEntityInstanceData*)0)" % type.supertypes[0]
+                "%s(std::move(e))" % type.supertypes[0]
                 if len(type.supertypes) == 1
-                else "IfcUtil::IfcBaseEntity()"
+                else "IfcUtil::IfcBaseEntity(std::move(e))"
             )
+
+            superclass_num_attrs = (
+                "%s(IfcEntityInstanceData(storage_t(%%d)))" % type.supertypes[0]
+                if len(type.supertypes) == 1
+                else "IfcUtil::IfcBaseEntity(IfcEntityInstanceData(storage_t(%d)))"
+            ) % len(constructor_arguments)
 
             write(
                 templates.entity_implementation,
@@ -212,8 +260,10 @@ class Implementation(codegen.Base):
                 attributes=nl(catnl(attributes)),
                 inverse=nl(catnl(inverse)),
                 superclass=superclass,
+                superclass_num_attrs=superclass_num_attrs,
                 schema_name=schema_name,
                 schema_name_upper=schema_name_upper,
+                index_in_schema=self.names.index(str(name)),
             )
 
         selectable_simple_types = sorted(
@@ -263,7 +313,7 @@ class Implementation(codegen.Base):
         for class_name, type in mapping.schema.simpletypes.items():
             type_str = mapping.make_type_string(mapping.flatten_type_string(type))
             attr_type = mapping.make_argument_type(type)
-            superclass = mapping.simple_type_parent(class_name)
+            superclass = mapping.simple_type_parent(class_name) or "IfcUtil::IfcBaseType"
 
             simpletype_impl_is = (
                 templates.simpletype_impl_is_with_supertype
@@ -271,7 +321,7 @@ class Implementation(codegen.Base):
                 else templates.simpletype_impl_is_without_supertype
             )
 
-            constructor = templates.constructor_single_initlist if superclass else templates.constructor
+            constructor = templates.constructor_single_initlist#  if superclass else templates.constructor
 
             simpletype_impl_cast = (
                 templates.simpletype_impl_cast_templated
@@ -287,6 +337,7 @@ class Implementation(codegen.Base):
 
             def compose(params, schema_name=schema_name, schema_name_upper=schema_name_upper):
                 class_name, attr_type, superclass, superclass_init, name, tmpl, return_type, args, body = params
+                index_in_schema = self.names.index(str(class_name))
                 underlying_type = mapping.list_instance_type(type)
                 arguments = ",".join(args)
                 body = body % locals()
@@ -297,9 +348,10 @@ class Implementation(codegen.Base):
                 map(
                     compose,
                     map(
-                        lambda x: (class_name, attr_type, superclass, "(IfcEntityInstanceData*)0") + x,
+                        lambda x: (class_name, attr_type, superclass) + x,
                         (
                             (
+                                "",
                                 "Class",
                                 templates.function,
                                 "const IfcParse::type_declaration&",
@@ -307,6 +359,7 @@ class Implementation(codegen.Base):
                                 templates.simpletype_impl_class,
                             ),
                             (
+                                "",
                                 "declaration",
                                 templates.const_function,
                                 "const IfcParse::type_declaration&",
@@ -314,27 +367,40 @@ class Implementation(codegen.Base):
                                 templates.simpletype_impl_declaration,
                             ),
                             (
+                                "std::move(e)",
                                 "",
                                 constructor,
                                 "",
-                                ("IfcEntityInstanceData* e",),
-                                templates.simpletype_impl_explicit_constructor,
+                                ("IfcEntityInstanceData&& e",),
+                                "",
                             ),
-                            ("", constructor, "", ("%s v" % type_str,), simpletype_impl_constructor),
-                            ("", templates.cast_function, type_str, (), simpletype_impl_cast),
+                            ("", "", constructor, "", ("%s v" % type_str,), ("set_attribute_value(0, v%s);" % ("->generalize()" if mapping.is_templated_list(type) else ""))) if mapping.simple_type_parent(class_name) is None else \
+                            ("v", "", constructor, "", ("%s v" % type_str,), ""),
+                            ("", "", templates.cast_function, type_str, (), simpletype_impl_cast),
                         ),
                     ),
                 )
             )
             simple_type_impl.append("")
 
-        external_definitions = [
-            ("extern entity* %s_%%s_type;" % schema_name_upper) % n for n in mapping.schema.entities.keys()
-        ] + [
-            ("extern type_declaration* %s_%%s_type;" % schema_name_upper) % n for n in mapping.schema.simpletypes.keys()
-        ] + [
-            ("extern enumeration_type* %s_%%s_type;" % schema_name_upper) % n for n in mapping.schema.enumerations.keys()
-        ]
+        """
+        external_definitions = (
+            [("extern entity* %s_%%s_type;" % schema_name_upper) % n for n in mapping.schema.entities.keys()]
+            + [
+                ("extern type_declaration* %s_%%s_type;" % schema_name_upper) % n
+                for n in mapping.schema.simpletypes.keys()
+            ]
+            + [
+                ("extern enumeration_type* %s_%%s_type;" % schema_name_upper) % n
+                for n in mapping.schema.enumerations.keys()
+            ]
+            + [
+                ("extern select_type* %s_%%s_type;" % schema_name_upper) % n
+                for n in mapping.schema.selects.keys()
+            ]
+        )
+        """
+        external_definitions = ["extern declaration* %s_types[%d];" % (schema_name_upper, len(self.names))]
 
         self.str = templates.implementation % {
             "schema_name_upper": schema_name_upper,

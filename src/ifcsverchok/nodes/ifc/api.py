@@ -1,3 +1,21 @@
+# IfcSverchok - IFC Sverchok extension
+# Copyright (C) 2020, 2021, 2022 Dion Moult <dion@thinkmoult.com>
+#
+# This file is part of IfcSverchok.
+#
+# IfcSverchok is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# IfcSverchok is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with IfcSverchok.  If not, see <http://www.gnu.org/licenses/>.
+
 import bpy
 import ifcopenshell
 import ifcopenshell.api
@@ -5,9 +23,13 @@ import ifcsverchok.helper
 from bpy.props import StringProperty, EnumProperty
 from sverchok.node_tree import SverchCustomTreeNode
 from sverchok.data_structure import updateNode
+import logging
+
+logger = logging.getLogger("sverchok.ifc")
 
 
 def update_usecase(self, context):
+    print("API - running update usecase!")
     module_usecase = self.get_module_usecase()
     if module_usecase:
         self.generate_node(*module_usecase)
@@ -79,8 +101,8 @@ class SvIfcApi(bpy.types.Node, SverchCustomTreeNode, ifcsverchok.helper.SvIfcCor
 
 
 def register():
-    bpy.utils.register_class(SvIfcTooltip)
     bpy.utils.register_class(SvIfcApi)
+    bpy.utils.register_class(SvIfcTooltip)
 
 
 def unregister():

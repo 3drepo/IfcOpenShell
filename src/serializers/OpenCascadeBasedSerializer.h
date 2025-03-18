@@ -17,32 +17,38 @@
  *                                                                              *
  ********************************************************************************/
 
+#ifdef IFOPSH_WITH_OPENCASCADE
+
 #ifndef OPENCASCADEBASEDSERIALIZER_H
 #define OPENCASCADEBASEDSERIALIZER_H
 
-#include "../ifcgeom_schema_agnostic/IfcGeomIterator.h"
+#include "../serializers/serializers_api.h"
+#include "../ifcgeom/Iterator.h"
 
-#include "../serializers/GeometrySerializer.h"
+#include "../ifcgeom/GeometrySerializer.h"
 
-class OpenCascadeBasedSerializer : public GeometrySerializer {
+#include <TopoDS_Shape.hxx>
+
+class SERIALIZERS_API OpenCascadeBasedSerializer : public WriteOnlyGeometrySerializer {
 	OpenCascadeBasedSerializer(const OpenCascadeBasedSerializer&); //N/A
 	OpenCascadeBasedSerializer& operator =(const OpenCascadeBasedSerializer&); //N/A
 protected:
 	const std::string out_filename;
 	const char* getSymbolForUnitMagnitude(float mag);
 public:
-	explicit OpenCascadeBasedSerializer(const std::string& out_filename, const SerializerSettings& settings)
-		: GeometrySerializer(settings)
+	explicit OpenCascadeBasedSerializer(const std::string& out_filename, const ifcopenshell::geometry::Settings& geometry_settings, const ifcopenshell::geometry::SerializerSettings& settings)
+		: WriteOnlyGeometrySerializer(geometry_settings, settings)
 		, out_filename(out_filename)
 	{}
 	virtual ~OpenCascadeBasedSerializer() {}
 	void writeHeader() {}
 	bool ready();
 	virtual void writeShape(const std::string& name, const TopoDS_Shape& shape) = 0;
-	void write(const IfcGeom::TriangulationElement<real_t>* /*o*/) {}
-	void write(const IfcGeom::BRepElement<real_t>* o);
+	void write(const IfcGeom::TriangulationElement* /*o*/) {}
+	void write(const IfcGeom::BRepElement* o);
 	bool isTesselated() const { return false; }
 	void setFile(IfcParse::IfcFile*) {}
 };
 
+#endif
 #endif

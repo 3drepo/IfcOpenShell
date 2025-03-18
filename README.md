@@ -1,226 +1,80 @@
+
 IfcOpenShell 
 ============
-IfcOpenShell is an open source ([LGPL]) software library for working with the Industry Foundation Classes ([IFC]) 
-file format. Currently supported IFC releases are [IFC2x3 TC1] and [IFC4 Add2 TC1].
 
-For more information, see
-* [http://ifcopenshell.org](http://ifcopenshell.org)  
-* [http://academy.ifcopenshell.org](http://academy.ifcopenshell.org)
+<p align="center">
+<img src="https://github.com/IfcOpenShell/IfcOpenShell/assets/88302/34901387-e2dd-4a0c-8e38-9ffc32a66cde">
+</p>
 
-[![Build Status](https://travis-ci.org/IfcOpenShell/IfcOpenShell.svg?branch=v0.6.0)](https://travis-ci.org/IfcOpenShell/IfcOpenShell)
 
-Prerequisites
--------------
-* Git
-* CMake (2.6 or newer)
-* Windows: [Visual Studio] 2008 or newer with C++ toolset (or [Visual C++ Build Tools]) or [MSYS2] + MinGW
-* *nix: GCC 4.7 or newer, or Clang (any version)
+IfcOpenShell is an open source ([LGPL]) software library for working with Industry Foundation Classes ([IFC]). Complete
+parsing support is provided for [IFC2x3 TC1], [IFC4 Add2 TC1], IFC4x1, IFC4x2, and [IFC4x3 Add2]. Extensive geometric support
+is implemented for the IFC releases [IFC2x3 TC1] and [IFC4 Add2 TC1]. Extending with support for arbitrary IFC schemas
+is possible at compile-time when using C++ and at run-time when using Python.
 
-Dependencies
--------------
-* [Boost](http://www.boost.org/)
-* [Open Cascade](https://dev.opencascade.org/) - *optional*, but required for building IfcGeom
-  ([official](https://dev.opencascade.org/release), "OCCT", or [community edition](https://github.com/tpaviot/oce), "OCE")  
-  For converting IFC representation items into BRep solids and tesselated meshes
-* [OpenCOLLADA](https://github.com/khronosGroup/OpenCOLLADA/) - *optional*  
-  For IfcConvert to be able to write tessellated Collada (.dae) files
-* [SWIG](http://www.swig.org/) and [Python](https://www.python.org/) - *optional*  
-  For building the IfcOpenShell Python interface and the Blender add-on
-* [3ds Max SDK](http://www.autodesk.com/products/3ds-max/free-trial) - *optional*  
-  For building the 3ds Max plug-in.
-  All recent versions of 3ds Max (2014 and newer) are 64-bit only, so a 64-bit installation is assumed.
+In addition to a C++ and Python API, IfcOpenShell comes with an ecosystem of tools, notably including IfcConvert (an application
+to convert IFC models to other formats), Bonsai (an add-on to Blender providing a graphical IFC authoring platform),
+and many other libraries, CLI apps, and more. Support is also provided for auxiliary standards such as BCF and IDS.
 
-Building IfcOpenShell
----------------------
+For more information, see:
 
-**Note:** The path where the source code is cloned to can contain spaces but non-ASCII characters are very likely to cause problems with the build.
+* [IfcOpenShell Website](http://ifcopenshell.org)
+* [IfcOpenShell Documentation](https://docs.ifcopenshell.org)
+  * [IfcOpenShell C++ Installation](https://docs.ifcopenshell.org/ifcopenshell/installation.html)
+  * [IfcOpenShell Python Installation](https://docs.ifcopenshell.org/ifcopenshell-python/installation.html)
+  * [IfcOpenShell Python Hello World Tutorial](https://docs.ifcopenshell.org/ifcopenshell-python/hello_world.html)
+* [Bonsai Website](https://bonsaibim.org)
+* [Bonsai Documentation](https://docs.bonsaibim.org/index.html)
+  * [Add-on Installation](https://docs.bonsaibim.org/quickstart/installation.html)
+  * [Exploring an IFC model](https://docs.bonsaibim.org/quickstart/explore_model.html)
+ 
+Development is sponsored through your generous donations!
 
-### Compiling on Windows
-The preferred way to fetch and build this project's dependencies is to use the build scripts
-in win/ folder. **See [win/readme.md] for more information**.
+[![Open Collective Contributors](https://img.shields.io/opencollective/all/opensourcebim?label=Sponsors&color=22ce5f)](https://opencollective.com/opensourcebim/)
 
-#### Using Visual Studio
-Instructions in a nutshell (**assuming Visual Studio 2015 x64 environment variables set**):
+Contents
+--------
 
-    > cd IfcOpenShell\win
-    > build-deps.cmd
-    > run-cmake.bat
+| Name                      | Description                                                           | License             | Service |
+| ------------------------- | --------------------------------------------------------------------- | ------------------- | ------- |
+| bcf                       | Library to read and write BCF-XML and query OpenCDE BCF-API modules   | LGPL-3.0-or-later   | [![PyPI](https://img.shields.io/pypi/v/bcf-client?label=PyPI&color=006dad)](https://pypi.org/project/bcf-client/) [![Anaconda-Server Badge](https://anaconda.org/conda-forge/bcf-client/badges/version.svg)](https://anaconda.org/conda-forge/bcf-client) |
+| bonsai                    | Add-on to Blender providing a graphical native IFC authoring platform | GPL-3.0-or-later    | [![Official](https://img.shields.io/badge/BonsaiBIM.org-Download-70ba35)](https://bonsaibim.org/download.html) [![GitHub Unstable](https://img.shields.io/github/v/release/ifcopenshell/ifcopenshell?filter=bonsai-*&label=GitHub-Unstable&color=f6f8fa)](https://github.com/IfcOpenShell/IfcOpenShell/releases?q=bonsai&expanded=true) [![Chocolatey](https://img.shields.io/chocolatey/v/blenderbim-nightly?label=Chocolatey&color=5c9fd8)](https://community.chocolatey.org/packages/blenderbim-nightly/) |
+| bsdd                      | Library to query the bSDD API                                         | LGPL-3.0-or-later   | [![PyPI](https://img.shields.io/pypi/v/bsdd?label=PyPI&color=006dad)](https://pypi.org/project/bsdd/) |
+| ifc2ca                    | Utility to convert IFC structural analysis models to Code_Aster       | LGPL-3.0-or-later   |
+| ifc4d                     | Convert to and from IFC and project management software               | LGPL-3.0-or-later   | [![PyPI](https://img.shields.io/pypi/v/ifc4d?label=PyPI&color=006dad)](https://pypi.org/project/ifc4d/) |
+| ifc5d                     | Report and optimise cost information from IFC                         | LGPL-3.0-or-later   | [![PyPI](https://img.shields.io/pypi/v/ifc5d?label=PyPI&color=006dad)](https://pypi.org/project/ifc5d/) |
+| ifcbimtester              | Wrapper for Gherkin based unit testing for IFC models                 | LGPL-3.0-or-later   |
+| ifcblender                | Historic Blender IFC import add-on                                    | LGPL-3.0-or-later\* |
+| ifccityjson               | Convert CityJSON to IFC                                               | LGPL-3.0-or-later   | [![PyPI](https://img.shields.io/pypi/v/ifccityjson?label=PyPI&color=006dad)](https://pypi.org/project/ifccityjson/) |
+| ifcclash                  | Clash detection library and CLI app                                   | LGPL-3.0-or-later   | [![PyPI](https://img.shields.io/pypi/v/ifcclash?label=PyPI&color=006dad)](https://pypi.org/project/ifcclash/) |
+| ifcconvert                | CLI app to convert IFC to many other formats                          | LGPL-3.0-or-later\* | [![Official](https://img.shields.io/badge/IfcOpenShell.org-Download-70ba35)](https://docs.ifcopenshell.org/ifcconvert/installation.html) [![GitHub](https://img.shields.io/github/v/release/ifcopenshell/ifcopenshell?filter=ifcconvert-*&label=GitHub&color=f6f8fa)](https://github.com/IfcOpenShell/IfcOpenShell/releases?q=ifcconvert&expanded=true)
+| ifccsv                    | Library and CLI app to export and import schedules from IFC           | LGPL-3.0-or-later   | [![PyPI](https://img.shields.io/pypi/v/ifccsv?label=PyPI&color=006dad)](https://pypi.org/project/ifccsv/) |
+| ifcdiff                   | Compare changes between IFC models                                    | LGPL-3.0-or-later   | [![PyPI](https://img.shields.io/pypi/v/ifcdiff?label=PyPI&color=006dad)](https://pypi.org/project/ifcdiff/) |
+| ifcfm                     | Extract IFC data for FM handover requirements                         | LGPL-3.0-or-later   | [![PyPI](https://img.shields.io/pypi/v/ifcfm?label=PyPI&color=006dad)](https://pypi.org/project/ifcfm/) |
+| ifcmax                    | Historic extension for IFC support in 3DS Max                         | LGPL-3.0-or-later\* | [![Official](https://img.shields.io/badge/IfcOpenShell.org-Download-70ba35)](https://docs.ifcopenshell.org/ifcmax.html)
+| ifcopenshell-python       | Python library for IFC manipulation                                   | LGPL-3.0-or-later\* | [![Official](https://img.shields.io/badge/IfcOpenShell.org-Download-70ba35)](https://docs.ifcopenshell.org/ifcopenshell-python/installation.html) [![GitHub](https://img.shields.io/github/v/release/ifcopenshell/ifcopenshell?filter=ifcopenshell-python-*&label=GitHub&color=f6f8fa)](https://github.com/IfcOpenShell/IfcOpenShell/releases?q=ifcopenshell-python&expanded=true) [![PyPI](https://img.shields.io/pypi/v/ifcopenshell?label=PyPI&color=006dad)](https://pypi.org/project/ifcopenshell/) [![Anaconda](https://img.shields.io/conda/vn/conda-forge/ifcopenshell?label=Anaconda&color=43b02a)](https://anaconda.org/conda-forge/ifcopenshell) [![Anaconda](https://img.shields.io/conda/vn/ifcopenshell/ifcopenshell?label=Anaconda-Unstable&color=43b02a)](https://anaconda.org/ifcopenshell/ifcopenshell) [![Docker](https://img.shields.io/docker/pulls/aecgeeks/ifcopenshell?label=Docker&color=1D63ED)](https://hub.docker.com/r/aecgeeks/ifcopenshell) [![AUR](https://img.shields.io/aur/version/ifcopenshell?label=AUR&color=1793d1)](https://aur.archlinux.org/packages/ifcopenshell) [![AUR Unstable](https://img.shields.io/aur/version/ifcopenshell-git?label=AUR-Unstable&color=1793d1)](https://aur.archlinux.org/packages/ifcopenshell-git) |
+| ifcpatch                  | Utility to run pre-packaged scripts to manipulate IFCs                | LGPL-3.0-or-later   | [![PyPI](https://img.shields.io/pypi/v/ifcpatch?label=PyPI&color=006dad)](https://pypi.org/project/ifcpatch/) |
+| ifcsverchok               | Blender Add-on for visual node programming with IFC                   | GPL-3.0-or-later    | [![GitHub Unstable](https://img.shields.io/github/v/release/ifcopenshell/ifcopenshell?filter=ifcsverchok-*.*.*.*&label=GitHub-Unstable&color=f6f8fa)](https://github.com/IfcOpenShell/IfcOpenShell/releases?q=ifcsverchok&expanded=true)
+| ifctester                 | Library, CLI and webapp for IDS model auditing                        | LGPL-3.0-or-later   | [![PyPI](https://img.shields.io/pypi/v/ifctester?label=PyPI&color=006dad)](https://pypi.org/project/ifctester/) |
 
-NB: `build-deps.cmd` need to be ran from the directory containing it, i.e. the `./win` folder.
+The IfcOpenShell C++ codebase is split into multiple interal libraries:
 
-You can now open and build the solution file in Visual Studio:
+| Name                      | Description                                                           | License             |
+| ------------------------- | --------------------------------------------------------------------- | ------------------- |
+| ifcgeom                   | Internal library for IfcOpenShell                                     | LGPL-3.0-or-later\* |
+| ifcgeom\_schema\_agnostic | Internal library for IfcOpenShell                                     | LGPL-3.0-or-later\* |
+| ifcgeomserver             | Internal library for IfcOpenShell                                     | LGPL-3.0-or-later\* |
+| ifcjni                    | Internal library for IfcOpenShell                                     | LGPL-3.0-or-later\* |
+| ifcparse                  | Internal library for IfcOpenShell                                     | LGPL-3.0-or-later\* |
+| ifcwrap                   | Internal library for IfcOpenShell                                     | LGPL-3.0-or-later\* |
+| qtviewer                  | Internal library for IfcOpenShell                                     | LGPL-3.0-or-later\* |
+| serializers               | Internal library for IfcOpenShell                                     | LGPL-3.0-or-later\* |
 
-    > ..\build-vs2015-x64\IfcOpenShell.sln
-
-As the scripts default to using the `RelWithDebInfo` configuration, and a freshly created solution by CMake defaults
-to `Debug`, make sure to switch the used build configuration. Build the `INSTALL` project (right-click -> Project
-Only) to deploy the headers and binaries into a single location if wanted/needed.
-
-Alternatively, one can use the utility batch file(s) to build and install the project easily from the command-line
-(installing a project will build it also, if required):
-
-    > install-ifcopenshell.bat
-
-#### Using MSYS2 + MinGW
-
-Start the MSYS2 Shell and then:
-
-    $ cd IfcOpenShell/win
-    $ ./build-deps.sh
-    $ ./run-cmake.sh
-    $ ./install-ifcopenshell.sh
-
-#### Using Bash on Ubuntu on Windows
-
-Start Bash on Ubuntu on Windows and follow the instructions below. Compiling on Ubuntu 14.04.4 LTS using GCC 4.8.4
-or Clang 3.5 has been confirmed to work.
-
-### Compiling on *nix
-
-The following instructions are for Ubuntu, modify as required for other operating systems. [nix/build-all.py] script
-can be experimented with and studied for pointers for other operating systems, but note that this script is not currently
-meant to be used for a typical IfcOpenShell workspace setup.
-
-Note: where `make -j` is written, add a number roughly equal to the amount of CPU cores + 1.
-
-**1)** Install most of the prerequisites and dependencies:
-
-    $ sudo apt-get install git cmake gcc g++ libboost-all-dev
-
-**2a)** Either use an OCE package from your operating system's software repository
-
-    $ sudo apt-get install liboce-foundation-dev liboce-modeling-dev liboce-ocaf-dev liboce-visualization-dev liboce-ocaf-lite-dev
-
-**2b)** or (if not available, or the latest code is wanted) compile OCE yourself (note that the build takes a long time):
-
-    $ sudo apt-get install libftgl-dev libtbb2 libtbb-dev libgl1-mesa-dev libfreetype6-dev
-    $ git clone https://github.com/tpaviot/oce.git
-    $ cd oce
-    $ mkdir build && cd build
-    $ cmake ..
-    $ make -j
-    $ sudo make install
-
-**2c)** or obtain and compile OCCT from https://dev.opencascade.org/release
-
-**3)** For building IfcConvert with COLLADA (.dae) support (on by default), OpenCOLLADA is needed:
-
-    $ sudo apt-get install libpcre3-dev libxml2-dev
-    $ git clone https://github.com/KhronosGroup/OpenCOLLADA.git
-    $ cd OpenCOLLADA
-    Using a known good revision, but HEAD should work too:
-    $ git checkout 064a60b65c2c31b94f013820856bc84fb1937cc6
-    $ mkdir build && cd build
-    $ cmake ..
-    $ make -j
-    $ sudo make install
-
-**4)** For building the IfcPython wrapper (on by default), SWIG and Python development are needed, if not already available:
-
-    $ sudo apt-get install python-all-dev swig
-
-**5)** To build IfcOpenShell please take the following steps. Alternatively use environment variables for setting the
-dependencies' paths. `OCC_INCLUDE_DIR` might be needed to set also. `OPENCOLLADA_INCLUDE_DIR` and `OPENCOLLADA_LIBRARY_DIR`
-(and potentially `PCRE_LIBRARY_DIR`) are needed if building with COLLADA support. (`-DCOLLADA_SUPPORT=0` disables it).
-
-    $ cd /path/to/IfcOpenShell
-    $ mkdir build && cd build
-    $ cmake ../cmake -DOCC_LIBRARY_DIR=/usr/lib/x86_64-linux-gnu/ \
-          -DOPENCOLLADA_INCLUDE_DIR="/usr/local/include/opencollada" \
-          -DOPENCOLLADA_LIBRARY_DIR="/usr/local/lib/opencollada"  \
-          -DPCRE_LIBRARY_DIR=/usr/lib/x86_64-linux-gnu/
-    $ make -j
-
-If all worked out correctly you can now use IfcOpenShell. See the examples below.
-
-**6)** Install the project if wanted:
-
-    $ sudo make install
-
-Installing IfcOpenShell with Conda
-----------------------------------
-Another option for building and installing IfcOpenShell is to use the popular
-[Anaconda Python Distribution](https://www.anaconda.com/download).
-The requirements are spread across a number of channels.
-You can add these channels to your configuration, or specify them all on the command line:
-
-    $ conda install -c conda-forge -c oce -c dlr-sc -c ifcopenshell ifcopenshell
-
-Usage examples
---------------
-
-**Invoking IfcConvert from the command line**
-
-    $ wget ftp://ftp.dds.no/pub/ifc/Munkerud/Munkerud_hus6_BE.zip
-    $ unzip Munkerud_hus6_BE.zip
-    $ ./IfcConvert Munkerud_hus6_BE.ifc
-    $ less Munkerud_hus6_BE.obj
-
-**Using the IfcOpenShell Python interface**
-
-    $ wget -O duplex.zip https://portal.nibs.org/files/wl/?id=4DsTgHFQAcOXzFetxbpRCECPbbfUqpgo
-    $ unzip duplex.zip
-    $ python
-    >>> import ifcopenshell
-    >>> f = ifcopenshell.open("Duplex_A_20110907_optimized.ifc")
-    >>>
-    >>> # Accessing entity instances by type:
-    >>> f.by_type("ifcwall")[:2]
-    [#91=IfcWallStandardCase('2O2Fr$t4X7Zf8NOew3FL9r',#1,'Basic Wall:Interior - Partition (92mm Stud):144586',$,'Basic Wall:Interior - Partition (92mm Stud):128360',#5198,#18806,'144586'), #92=IfcWallStandardCase('2O2Fr$t4X7Zf8NOew3FLIE',#1,'Basic Wall:Interior - Partition (92mm Stud):143921',$,'Basic Wall:Interior - Partition (92mm Stud):128360',#5206,#18805,'143921')]
-    >>> wall = _[0]
-    >>> len(wall) # number of EXPRESS attributes
-    8
-    >>>
-    >>> # Accessing EXPRESS attributes by name:
-    >>> wall.GlobalId 
-    '2O2Fr$t4X7Zf8NOew3FL9r'
-    >>> wall.Name = "My wall"
-    >>> wall.NonExistingAttr
-    Traceback (most recent call last):
-      File "<stdin>", line 1, in <module>
-      File ".\ifcopenshell.py", line 14, in __getattr__
-        except: raise AttributeError("entity instance of type '%s' has no attribute'%s'"%(self.wrapped_data.is_a(), name)) from None
-    AttributeError: entity instance of type 'IfcWallStandardCase' has no attribute 'NonExistingAttr'
-    >>> wall.GlobalId = 3
-    Traceback (most recent call last):
-      File "<stdin>", line 1, in <module>
-      File ".\ifcopenshell.py", line 26, in __setattr__
-        self[self.wrapped_data.get_argument_index(key)] = value
-      File ".\ifcopenshell.py", line 30, in __setitem__
-        self.wrapped_data.set_argument(idx, entity_instance.map_value(value))
-      File ".\ifc_wrapper.py", line 118, in <lambda>
-        set_argument = lambda self,x,y: self._set_argument(x) if y is None else self
-    ._set_argument(x,y)
-      File ".\ifc_wrapper.py", line 114, in _set_argument
-        def _set_argument(self, *args): return _ifc_wrapper.entity_instance__set_argument(self, *args)
-    RuntimeError: INT is not a valid type for 'GlobalId'
-    >>> # Creating new entity instances
-    >>> f.createIfcCartesianPoint(Coordinates=(1.0,1.5,2.0))
-    #27530=IfcCartesianPoint((1.,1.5,2.))
-    >>> 
-    >>> # Working with GlobalId attributes:
-    >>> import uuid
-    >>> ifcopenshell.guid.compress(uuid.uuid1().hex)
-    '3x4C8Q_6qHuv$P$FYkANRX'
-    >>> new_guid = _
-    >>> owner_hist = f.by_type("IfcOwnerHistory")[0]
-    >>> new_wall = f.createIfcWallStandardCase(new_guid, owner_hist, None, None, Tag='my_tag')
-    >>> new_wall.ObjectType = ''
-    >>> new_wall.ObjectPlacement = new_wall.Representation = None
-    >>>
-    >>> # Accessing entity instances by instance id or GlobalId:
-    >>> f[92]
-    #92=IfcWallStandardCase('2O2Fr$t4X7Zf8NOew3FLIE',#1,'Basic Wall:Interior - Partition (92mm Stud):143921',$,'Basic Wall:Interior - Partition (92mm Stud):128360',#5206,#18805,'143921')
-    >>> f['2O2Fr$t4X7Zf8NOew3FLIE']
-    #92=IfcWallStandardCase('2O2Fr$t4X7Zf8NOew3FLIE',#1,'Basic Wall:Interior - Partition (92mm Stud):143921',$,'Basic Wall:Interior - Partition (92mm Stud):128360',#5206,#18805,'143921')
-    >>>
-    >>> # Writing IFC-SPF files to disk:
-    >>> f.write("out.ifc")
-
-[LGPL]: https://github.com/IfcOpenShell/IfcOpenShell/tree/master/COPYING "LGPL"
+[LGPL]: https://github.com/IfcOpenShell/IfcOpenShell/tree/master/COPYING.LESSER "LGPL-3.0-or-later"
 [IFC]: https://technical.buildingsmart.org/standards/ifc/ "IFC"
 [IFC2x3 TC1]: https://standards.buildingsmart.org/IFC/RELEASE/IFC2x3/TC1/HTML/ "IFC2x3 TC1"
 [IFC4 Add2 TC1]: https://standards.buildingsmart.org/IFC/RELEASE/IFC4/ADD2_TC1/HTML/ "IFC4 Add2 TC1"
+[IFC4x3 Add2]: https://standards.buildingsmart.org/IFC/RELEASE/IFC4_3/ "IFC4x3 Add2"
 [Visual Studio]: https://www.visualstudio.com/ "Visual Studio"
 [Visual C++ Build Tools]: http://landinghub.visualstudio.com/visual-cpp-build-tools "Visual C++ Build Tools"
 [MSYS2]: https://msys2.github.io/ "MSYS2"

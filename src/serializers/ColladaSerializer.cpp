@@ -44,7 +44,7 @@ static std::string& collada_id(std::string& s)
 }
 
 void ColladaSerializer::ColladaExporter::ColladaGeometries::addFloatSource(const std::string& mesh_id,
-    const std::string& suffix, const std::vector<real_t>& floats, const char* coords /* = "XYZ" */)
+    const std::string& suffix, const std::vector<double>& floats, const char* coords /* = "XYZ" */)
 {
 	COLLADASW::FloatSource source(mSW);
 	source.setId(mesh_id + suffix);
@@ -56,7 +56,7 @@ void ColladaSerializer::ColladaExporter::ColladaGeometries::addFloatSource(const
 		source.getParameterNameList().push_back(std::string(1, coords[i]));
 	}
 	source.prepareToAppendValues();
-    for (std::vector<real_t>::const_iterator it = floats.begin(); it != floats.end(); ++it) {
+    for (std::vector<double>::const_iterator it = floats.begin(); it != floats.end(); ++it) {
 		source.appendValues(*it);
 	}
 	source.finish();
@@ -64,10 +64,10 @@ void ColladaSerializer::ColladaExporter::ColladaGeometries::addFloatSource(const
 
 void ColladaSerializer::ColladaExporter::ColladaGeometries::write(
     const std::string &mesh_id, const std::string &/**<@todo 'default_material_name' unused, remove? */,
-    const std::vector<real_t>& positions, const std::vector<real_t>& normals,
+    const std::vector<double>& positions, const std::vector<double>& normals,
     const std::vector<int>& faces, const std::vector<int>& edges,
-    const std::vector<int>& material_ids, const std::vector<IfcGeom::Material>& /**<@todo 'materials' unused, remove? */,
-    const std::vector<real_t>& uvs, const std::vector<std::string>& material_references)
+    const std::vector<int>& material_ids, const std::vector<ifcopenshell::geometry::taxonomy::style::ptr>& /**<@todo 'materials' unused, remove? */,
+    const std::vector<double>& uvs, const std::vector<std::string>& material_references)
 {
 	openMesh(mesh_id);
 	
@@ -179,7 +179,7 @@ void ColladaSerializer::ColladaExporter::ColladaGeometries::close() {
 
 void ColladaSerializer::ColladaExporter::ColladaScene::add(
     const std::string& node_id, const std::string& node_name, const std::string& geom_name,
-    const std::vector<std::string>& material_ids, const IfcGeom::Transformation<real_t>& transformation)
+    const std::vector<std::string>& material_ids, const IfcGeom::Transformation& transformation)
 {
 	if (!scene_opened) {
 		openVisualScene(scene_id);
@@ -194,33 +194,30 @@ void ColladaSerializer::ColladaExporter::ColladaScene::add(
 	// The matrix attribute of an entity is basically a 4x3 representation of its ObjectPlacement.
 	// Note that this placement is absolute, ie it is multiplied with all parent placements.
 
-	IfcGeom::Transformation<real_t>* relative_trsf = 0;
-	const IfcGeom::Transformation<real_t>* transformation_towrite = &transformation;
+	auto transformation_towrite = transformation.data()->ccomponents();
 	
 	// If this is not the first parent, get the relative placement
 	if (parentNodes.size() > 0)
 	{
-		relative_trsf = new IfcGeom::Transformation<real_t>(matrixStack.top().multiplied(transformation));
-		transformation_towrite = relative_trsf;
+		// @todo check order
+		transformation_towrite = matrixStack.top().ccomponents() * transformation_towrite;
 	}
 
-	const std::vector<real_t>& posmatrix = transformation_towrite->matrix().data();
+	const auto& posmatrix = transformation_towrite;
 
 	double matrix_array[4][4] = {
-		{ (double)posmatrix[0], (double)posmatrix[3], (double)posmatrix[6], (double)posmatrix[9] },
-		{ (double)posmatrix[1], (double)posmatrix[4], (double)posmatrix[7], (double)posmatrix[10] },
-		{ (double)posmatrix[2], (double)posmatrix[5], (double)posmatrix[8], (double)posmatrix[11] },
-		{ 0, 0, 0, 1 }
+		{ (double)posmatrix(0,0), (double)posmatrix(0,1), (double)posmatrix(0,2), (double)posmatrix(0,3) },
+		{ (double)posmatrix(1,0), (double)posmatrix(1,1), (double)posmatrix(1,2), (double)posmatrix(1,3) },
+		{ (double)posmatrix(2,0), (double)posmatrix(2,1), (double)posmatrix(2,2), (double)posmatrix(2,3) },
+		{ (double)posmatrix(3,0), (double)posmatrix(3,1), (double)posmatrix(3,2), (double)posmatrix(3,3) }
 	};
-
-	delete relative_trsf;
 
 	node.start();
 	node.addMatrix(matrix_array);
 	COLLADASW::InstanceGeometry instanceGeometry(mSW);
 	instanceGeometry.setUrl("#" + geom_name);
     BOOST_FOREACH(const std::string &material_name, material_ids) {
-		// Unescape to avoid double escaping beucase OpenCollada's material URI parameter escapes XML internally
+		// Unescape to avoid double escaping because OpenCollada's material URI parameter escapes XML internally
     	std::string unescaped = material_name;
     	IfcUtil::unescape_xml(unescaped);
 
@@ -231,32 +228,30 @@ void ColladaSerializer::ColladaExporter::ColladaScene::add(
 	node.end();
 }
 
-void ColladaSerializer::ColladaExporter::ColladaScene::addParent(const IfcGeom::Element<real_t>& parent){
+void ColladaSerializer::ColladaExporter::ColladaScene::addParent(const IfcGeom::Element& parent){
 	//we open the visual scene tag if it's not.
 	if (!scene_opened) {
 		openVisualScene(scene_id);
 		scene_opened = true;
 	}
 
-	const IfcGeom::Transformation<real_t>& parent_trsf = parent.transformation();
+	const IfcGeom::Transformation& parent_trsf = parent.transformation();
 
-	IfcGeom::Transformation<real_t>* relative_trsf = 0;
-	const IfcGeom::Transformation<real_t>* transformation_towrite = &parent_trsf;
+	auto transformation_towrite = parent_trsf.data()->ccomponents();
 
 	// If this is not the first parent, get the relative placement
-	if (parentNodes.size() > 0)
-	{
-		relative_trsf = new IfcGeom::Transformation<real_t>(matrixStack.top().multiplied(parent_trsf));
-		transformation_towrite = relative_trsf;
+	if (parentNodes.size() > 0) {
+		// @todo check order
+		transformation_towrite = matrixStack.top().ccomponents() * transformation_towrite;
 	}
 
-	const std::vector<real_t>& parentMatrix = transformation_towrite->matrix().data();
+	const auto& posmatrix = transformation_towrite;
 
 	double matrix_array[4][4] = {
-		{ (double)parentMatrix[0], (double)parentMatrix[3], (double)parentMatrix[6], (double)parentMatrix[9] },
-		{ (double)parentMatrix[1], (double)parentMatrix[4], (double)parentMatrix[7], (double)parentMatrix[10] },
-		{ (double)parentMatrix[2], (double)parentMatrix[5], (double)parentMatrix[8], (double)parentMatrix[11] },
-		{ 0, 0, 0, 1 }
+		{ (double)posmatrix(0,0), (double)posmatrix(0,1), (double)posmatrix(0,2), (double)posmatrix(0,3) },
+		{ (double)posmatrix(1,0), (double)posmatrix(1,1), (double)posmatrix(1,2), (double)posmatrix(1,3) },
+		{ (double)posmatrix(2,0), (double)posmatrix(2,1), (double)posmatrix(2,2), (double)posmatrix(2,3) },
+		{ (double)posmatrix(3,0), (double)posmatrix(3,1), (double)posmatrix(3,2), (double)posmatrix(3,3) }
 	};
 
     std::string name = serializer->object_id(&parent);
@@ -272,7 +267,7 @@ void ColladaSerializer::ColladaExporter::ColladaScene::addParent(const IfcGeom::
 	current_node->addMatrix(matrix_array);
 
 	// Add the node to the parent stack
-	matrixStack.push(parent_trsf.inverted());
+	matrixStack.push(ifcopenshell::geometry::taxonomy::matrix4(parent_trsf.data()->ccomponents().inverse()));
 	parentNodes.push(current_node);
 	serializer->parentStackId.push(parent.id());
 }
@@ -306,24 +301,24 @@ void ColladaSerializer::ColladaExporter::ColladaScene::write() {
 }
 
 void ColladaSerializer::ColladaExporter::ColladaMaterials::ColladaEffects::write(
-    const IfcGeom::Material &material, const std::string &material_uri)
+    const ifcopenshell::geometry::taxonomy::style::ptr &material, const std::string &material_uri)
 {
     openEffect(material_uri + "-fx");
 	COLLADASW::EffectProfile effect(mSW);
 	effect.setShaderType(COLLADASW::EffectProfile::LAMBERT);
-	if (material.hasDiffuse()) {
-		const double* diffuse = material.diffuse();
-		effect.setDiffuse(COLLADASW::ColorOrTexture(COLLADASW::Color(diffuse[0],diffuse[1],diffuse[2])));
+	if (material->diffuse) {
+		const auto& diffuse = material->diffuse.ccomponents();
+		effect.setDiffuse(COLLADASW::ColorOrTexture(COLLADASW::Color(diffuse(0),diffuse(1),diffuse(2))));
 	}
-	if (material.hasSpecular()) {
-		const double* specular = material.specular();
-		effect.setSpecular(COLLADASW::ColorOrTexture(COLLADASW::Color(specular[0],specular[1],specular[2])));
+	if (material->specular) {
+		const auto& specular = material->specular.ccomponents();
+		effect.setSpecular(COLLADASW::ColorOrTexture(COLLADASW::Color(specular(0),specular(1),specular(2))));
 	}
-	if (material.hasSpecularity()) {
-		effect.setShininess(material.specularity());
+	if (material->specularity == material->specularity) {
+		effect.setShininess(material->specularity);
 	}
-	if (material.hasTransparency()) {
-		const double transparency = material.transparency();
+	if (material->transparency == material->transparency) {
+		const double transparency = material->transparency;
 		if (transparency > 0) {
 			// The default opacity mode for Collada is A_ONE, which apparently indicates a
 			// transparency value of 1 to be fully opaque. Hence transparency is inverted.
@@ -338,13 +333,12 @@ void ColladaSerializer::ColladaExporter::ColladaMaterials::ColladaEffects::close
 	closeLibrary();
 }
 
-void ColladaSerializer::ColladaExporter::ColladaMaterials::add(const IfcGeom::Material& material) {
+void ColladaSerializer::ColladaExporter::ColladaMaterials::add(const ifcopenshell::geometry::taxonomy::style::ptr& material) {
 	if (!contains(material)) {
-		std::string material_name = (serializer->settings().get(SerializerSettings::USE_MATERIAL_NAMES)
-	 		? material.original_name() : material.name());
+		std::string material_name = material->name;
 
 		if (material_name.empty()) {
-			material_name = "missing-material-" + material.name();
+			material_name = "missing-material-" + material->name;
 		}
 
 		collada_id(material_name);
@@ -355,23 +349,23 @@ void ColladaSerializer::ColladaExporter::ColladaMaterials::add(const IfcGeom::Ma
 	}
 }
 
-std::string ColladaSerializer::ColladaExporter::ColladaMaterials::getMaterialUri(const IfcGeom::Material& material) {
-	std::vector<IfcGeom::Material>::iterator it = std::find(materials.begin(), materials.end(), material);
+std::string ColladaSerializer::ColladaExporter::ColladaMaterials::getMaterialUri(const ifcopenshell::geometry::taxonomy::style::ptr& material) {
+	std::vector<ifcopenshell::geometry::taxonomy::style::ptr>::iterator it = std::find(materials.begin(), materials.end(), material);
 	ptrdiff_t index = std::distance(materials.begin(), it);
 	return material_uris.at(index);
 }
 
-bool ColladaSerializer::ColladaExporter::ColladaMaterials::contains(const IfcGeom::Material& material) {
+bool ColladaSerializer::ColladaExporter::ColladaMaterials::contains(const ifcopenshell::geometry::taxonomy::style::ptr& material) {
 	return std::find(materials.begin(), materials.end(), material) != materials.end();
 }
 
 void ColladaSerializer::ColladaExporter::ColladaMaterials::write() {
 	effects.close();
-    BOOST_FOREACH(const IfcGeom::Material& material, materials) {
+    BOOST_FOREACH(const ifcopenshell::geometry::taxonomy::style::ptr& material, materials) {
         std::string material_name = getMaterialUri(material);
 		openMaterial(material_name);
 
-		// Unescape to avoid double escaping beucase OpenCollada's addInstanceEffect escapes XML internally
+		// Unescape to avoid double escaping because OpenCollada's addInstanceEffect escapes XML internally
 		IfcUtil::unescape_xml(material_name);
 
         addInstanceEffect("#" + material_name + "-fx");
@@ -390,9 +384,9 @@ void ColladaSerializer::ColladaExporter::startDocument(const std::string& unit_n
 	asset.add();
 }
 
-void ColladaSerializer::ColladaExporter::write(const IfcGeom::TriangulationElement<real_t>* o)
+void ColladaSerializer::ColladaExporter::write(const IfcGeom::TriangulationElement* o)
 {
-	const IfcGeom::Representation::Triangulation<real_t>& mesh = o->geometry();
+	const IfcGeom::Representation::Triangulation& mesh = o->geometry();
 	
     std::string name = serializer->object_id(o);
 	collada_id(name);
@@ -401,7 +395,7 @@ void ColladaSerializer::ColladaExporter::write(const IfcGeom::TriangulationEleme
 	collada_id(representation_id);
 
 	std::vector<std::string> material_references;
-	BOOST_FOREACH(const IfcGeom::Material& material, mesh.materials()) {
+	BOOST_FOREACH(const ifcopenshell::geometry::taxonomy::style::ptr& material, mesh.materials()) {
 		materials.add(material);
 
 		std::string material_name = materials.getMaterialUri(material);
@@ -411,7 +405,7 @@ void ColladaSerializer::ColladaExporter::write(const IfcGeom::TriangulationEleme
 	DeferredObject deferred(name, representation_id, o->type(), o->transformation(), mesh.verts(), mesh.normals(),
 		mesh.faces(), mesh.edges(), mesh.material_ids(), mesh.materials(), material_references, mesh.uvs());
 
-	if (serializer->settings().get(SerializerSettings::USE_ELEMENT_HIERARCHY)) {
+	if (serializer->geometry_settings().get<ifcopenshell::geometry::settings::UseElementHierarchy>().get()) {
 		deferred.parents() = o->parents();
 	}
 
@@ -422,11 +416,11 @@ std::string ColladaSerializer::differentiateSlabTypes(const IfcUtil::IfcBaseEnti
 {
 	auto value = slab->get("PredefinedType");
 
-    if (value->isNull()) {
+    if (value.isNull()) {
         return "_Unknown";
     }
 
-	const std::string str_value = *value;
+	const std::string str_value = value;
 	std::string result;
 
 	if (str_value == "FLOOR") {
@@ -441,19 +435,19 @@ std::string ColladaSerializer::differentiateSlabTypes(const IfcUtil::IfcBaseEnti
 		result = "_NotDefined";
 	} else {
 		auto otype = slab->get("ObjectType");
-		if (otype->isNull()) {
+		if (otype.isNull()) {
 			result = "_Unknown";
 		} else {
-			result = (std::string) *otype;
+			result = (std::string) otype;
 		}
 	}
 
 	return result;
 }
 
-std::string ColladaSerializer::object_id(const IfcGeom::Element<real_t>* o) /*override*/
+std::string ColladaSerializer::object_id(const IfcGeom::Element* o) /*override*/
 {
-    if (settings_.get(SerializerSettings::USE_ELEMENT_TYPES)) {
+    if (settings_.get<ifcopenshell::geometry::settings::UseElementTypes>().get()) {
         const std::string slabSuffix = (o->product() && o->product()->declaration().name() == "IfcSlab")
             ? differentiateSlabTypes(o->product())
             : "";
@@ -466,7 +460,7 @@ void ColladaSerializer::ColladaExporter::endDocument() {
 	// In fact due the XML based nature of Collada and its dependency on library nodes,
 	// only at this point all objects are written to the stream.
 	materials.write();
-	bool use_hierarchy = serializer->settings().get(SerializerSettings::USE_ELEMENT_HIERARCHY);
+	bool use_hierarchy = serializer->geometry_settings().get<ifcopenshell::geometry::settings::UseElementHierarchy>().get();
 	
 	std::set<std::string> geometries_written;
 
@@ -544,7 +538,7 @@ void ColladaSerializer::writeHeader() {
 	exporter.startDocument(unit_name, unit_magnitude);
 }
 
-void ColladaSerializer::write(const IfcGeom::TriangulationElement<real_t>* o) {
+void ColladaSerializer::write(const IfcGeom::TriangulationElement* o) {
     exporter.write(o);
 }
 

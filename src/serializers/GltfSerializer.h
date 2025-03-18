@@ -22,32 +22,35 @@
 
 #ifdef WITH_GLTF
 
-#include "../serializers/GeometrySerializer.h"
+#include "../serializers/serializers_api.h"
+#include "../ifcgeom/GeometrySerializer.h"
 
 #include <nlohmann/json.hpp>
 using json = nlohmann::json;
 
 #include <map>
 
-class GltfSerializer : public GeometrySerializer {
+class SERIALIZERS_API GltfSerializer : public WriteOnlyGeometrySerializer {
 private:
 	std::string filename_, tmp_filename1_, tmp_filename2_;
 	std::ofstream fstream_, tmp_fstream1_, tmp_fstream2_;
 	std::map<std::string, int> materials_, meshes_;
 	json json_, node_array_;
+	boost::optional<json> ecef_transform_, north_rotation_;
+	int bufferViewId;
 
-	int writeMaterial(const IfcGeom::Material& style);
+	int writeMaterial(const ifcopenshell::geometry::taxonomy::style::ptr style);
 public:
-	GltfSerializer(const std::string& filename, const SerializerSettings& settings);
+	GltfSerializer(const std::string& filename, const ifcopenshell::geometry::Settings& geometry_settings, const ifcopenshell::geometry::SerializerSettings& settings);
 	virtual ~GltfSerializer();
 	bool ready();
 	void writeHeader();
-	void write(const IfcGeom::TriangulationElement<real_t>* o);
-	void write(const IfcGeom::BRepElement<real_t>* /*o*/) {}
+	void write(const IfcGeom::TriangulationElement* o);
+	void write(const IfcGeom::BRepElement* /*o*/) {}
 	void finalize();
 	bool isTesselated() const { return true; }
 	void setUnitNameAndMagnitude(const std::string& /*name*/, float /*magnitude*/) {}
-	void setFile(IfcParse::IfcFile*) {}
+	void setFile(IfcParse::IfcFile*);
 };
 
 #endif
