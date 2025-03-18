@@ -24,14 +24,14 @@ Problems we are aware of but will not fix:
 
 1. Give `set IFCOS_INSTALL_PYTHON=FALSE` before running build-deps.cmd.
 2. Make sure to give the build tools with build-deps.cmd, e.g. `build-deps.cmd vs2022-x64`. Despite the samples, this is not optional.
-3. Give the same tools for run-cmake.bat, and disable python: `run-cmake.bat vs2022-x64 -DBUILD_IFCPYTHON=0 -DCOLLADA_SUPPORT=0`
+3. Give the same tools for run-cmake.bat, and disable python: `run-cmake.bat vs2022-x64 -DBUILD_IFCPYTHON=0 -DCOLLADA_SUPPORT=0 -DHDF5_SUPPORT=0`
 
 
 **Windows v142**
 
 1. Give `set IFCOS_INSTALL_PYTHON=FALSE` before running build-deps.cmd
 2. Make sure to give the build tools with build-deps.cmd, e.g. `build-deps.cmd vs2019-x64`. Despite the samples, this is not optional.
-3. Give the same tools for run-cmake.bat, and disable python: `run-cmake.bat vs2019-x64 -DBUILD_IFCPYTHON=0 -DCOLLADA_SUPPORT=0`
+3. Give the same tools for run-cmake.bat, and disable python: `run-cmake.bat vs2019-x64 -DBUILD_IFCPYTHON=0 -DCOLLADA_SUPPORT=0 -DHDF5_SUPPORT=0`
 
 If receiving linker errors, replace the Boost environment variables with a 3rd party copy of Boost in `run-cmake.bat`, e.g.
 
@@ -39,6 +39,8 @@ If receiving linker errors, replace the Boost environment variables with a 3rd p
 set BOOST_ROOT=D:\3drepo\bouncer\boost_1_86_0
 set BOOST_LIBRARYDIR=D:\3drepo\bouncer\boost_1_86_0\lib64-msvc-14.2
 ```
+
+The BOOST variables can also be updated in `win/run_cmake.bat`.
 
 IfcOpenShell comes with its own version of OpenCascade (7.8.1).
 
