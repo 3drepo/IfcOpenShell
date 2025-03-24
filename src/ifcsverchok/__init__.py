@@ -147,7 +147,10 @@ from ifcsverchok.ifcstore import SvIfcStore
 
 
 class IFC_Sv_UpdateCurrent(bpy.types.Operator):
-    """Update current Sverchok node tree"""
+    """Update current Sverchok node tree.
+
+    Will reset transient IFC file.
+    """
 
     bl_idname = "ifc.sverchok_update_current"
     bl_label = "Update Current Node Tree"
@@ -161,9 +164,12 @@ class IFC_Sv_UpdateCurrent(bpy.types.Operator):
     # infra-related spatial structure elements, such as IfcBridge.
     # https://github.com/IfcOpenShell/IfcOpenShell/pull/2576#discussion_r1016261407
     def execute(self, context):
+        import sverchok.node_tree
+
         self.file = SvIfcStore.purge()
         node_tree = context.space_data.node_tree
         if node_tree:
+            assert isinstance(node_tree, sverchok.node_tree.SverchCustomTree)
             if self.force_mode or node_tree.sv_process:
                 try:
                     bpy.context.window.cursor_set("WAIT")
@@ -178,8 +184,9 @@ class IFC_Sv_write_file(bpy.types.Operator):
     bl_idname = "ifc.write_file_panel"
     bl_label = "Write File"
     bl_options = {"REGISTER", "UNDO"}
-    bl_description = "File path to write to."
+    bl_description = "Save transient IFC file to the provided path."
     filepath: bpy.props.StringProperty(subtype="FILE_PATH")
+    filter_glob: bpy.props.StringProperty(default="*.ifc", options={"HIDDEN"})
     node_group: bpy.props.StringProperty(default="")
     force_mode: bpy.props.BoolProperty(default=False)
 

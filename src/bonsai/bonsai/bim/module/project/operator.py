@@ -51,7 +51,6 @@ from bonsai.bim.ifc import IfcStore
 from bonsai.bim.ui import IFCFileSelector
 from bonsai.bim import import_ifc
 from bonsai.bim import export_ifc
-from collections import defaultdict
 from math import radians
 from pathlib import Path
 from collections import defaultdict
@@ -63,7 +62,7 @@ from bonsai.bim.module.project.decorator import ProjectDecorator, ClippingPlaneD
 from bonsai.bim.module.project.prop import BreadcrumbType
 from bonsai.bim.module.model.decorator import PolylineDecorator, FaceAreaDecorator
 from bonsai.bim.module.model.polyline import PolylineOperator
-from typing import Union, TYPE_CHECKING, Literal, get_args
+from typing import Union, TYPE_CHECKING, get_args
 
 if TYPE_CHECKING:
     from bonsai.bim.module.project.prop import Link
@@ -1548,6 +1547,8 @@ class SelectLinkHandle(bpy.types.Operator):
 class ExportIFC(bpy.types.Operator):
     bl_idname = "bim.save_project"
     bl_label = "Save IFC"
+    # Prevents crash on Blender 4.4.0.
+    bl_description = "Save active IFC file by the provided filepath."
     bl_options = {"REGISTER", "UNDO"}
     filename_ext = ".ifc"
     filter_glob: bpy.props.StringProperty(default="*.ifc;*.ifczip;*.ifcxml;*.ifcjson", options={"HIDDEN"})
@@ -2191,7 +2192,8 @@ class EnableCulling(bpy.types.Operator):
     bl_label = "Enable Culling"
     bl_options = {"REGISTER"}
 
-    def __init__(self):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.last_view_corners = None
         self.total_mousemoves = 0
         self.cullable_objects = []
@@ -2297,7 +2299,8 @@ class RefreshClippingPlanes(bpy.types.Operator):
     bl_label = "Refresh Clipping Planes"
     bl_options = {"REGISTER"}
 
-    def __init__(self):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.total_planes = 0
         self.camera = None
 
@@ -2316,7 +2319,7 @@ class RefreshClippingPlanes(bpy.types.Operator):
                 should_refresh = True
                 break
 
-        if context.scene.camera.visible_get() and tool.Ifc.get_entity(context.scene.camera):
+        if (camera := context.scene.camera) and camera.visible_get() and tool.Ifc.get_entity(camera):
             camera = context.scene.camera
         else:
             camera = None
@@ -2606,8 +2609,9 @@ class MeasureTool(bpy.types.Operator, PolylineOperator):
     def poll(cls, context):
         return context.space_data.type == "VIEW_3D"
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, *args, **kwargs):
+        bpy.types.Operator.__init__(self, *args, **kwargs)
+        PolylineOperator.__init__(self)
         self.input_options = ["D", "A", "X", "Y", "Z"]
         self.input_ui = tool.Polyline.create_input_ui(input_options=self.input_options)
 
@@ -2700,8 +2704,9 @@ class MeasureFaceAreaTool(bpy.types.Operator, PolylineOperator):
     def poll(cls, context):
         return context.space_data.type == "VIEW_3D"
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, *args, **kwargs):
+        bpy.types.Operator.__init__(self, *args, **kwargs)
+        PolylineOperator.__init__(self)
         self.input_options = ["AREA"]
         self.input_ui = tool.Polyline.create_input_ui(input_options=self.input_options)
         self.clicked_faces = []
