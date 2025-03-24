@@ -6,10 +6,9 @@ This is a fork of IfcOpenShell for use by [3drepobouncer](https://github.com/3dr
 
 It currently tracks 0.8.0.
 
-### Changes
+### Changes (Latest)
 
-1. Merged this PR: https://github.com/IfcOpenShell/IfcOpenShell/pull/6329
-2. Gave control over lifetime of Iterator Elements to the consumer (see this discussion: https://github.com/IfcOpenShell/IfcOpenShell/issues/6385)
+None (current fixes are merged upstream)
 
 Problems we are aware of but will not fix:
 
